@@ -1,5 +1,7 @@
 package com.t660.mtp_sync.mtp
 
+import com.t660.mtp_sync.IFile
+
 /**
   * Created by luyi on 15/07/2017.
   */
@@ -8,19 +10,6 @@ case class MtpFile(id: Int,
                    isFolder: Boolean,
                    parentId: Int,
                    storageId: Int,
+                   size: Long,
                    modificationDate: Long,
-                   children: Seq[MtpFile] = Seq.empty) {
-  def name: String = path.last
-}
-
-object MtpFile {
-
-  def print(file: MtpFile, indent: String = ""): Unit = {
-    println(indent + file.name)
-    if (file.isFolder) {
-      for (c <- file.children)
-        print(c, indent + "  ")
-    }
-  }
-
-}
+                   children: Seq[MtpFile] = Seq.empty) extends IFile

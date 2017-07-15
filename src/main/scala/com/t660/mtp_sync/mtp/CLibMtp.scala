@@ -93,6 +93,7 @@ object CLibMtp {
               isFolder = isFolder,
               parentId = id,
               storageId = storageId,
+              size = fileStruct.filesize(),
               modificationDate = fileStruct.modificationdate,
               children = children
             )
