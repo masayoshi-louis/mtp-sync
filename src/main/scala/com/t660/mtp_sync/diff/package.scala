@@ -28,21 +28,31 @@ package object diff {
   private def compute(srcBase: Seq[String], srcFilesMap: mutable.Map[String, IFile],
                       dstBase: Seq[String], dstFilesMap: mutable.Map[String, IFile]): Result = {
     val removes = new ListBuffer[Remove]
+    val removedPaths = new ListBuffer[String]
     val creates = new ListBuffer[CreateFolder]
     val adds = new ListBuffer[AddFile]
     val updates = new ListBuffer[UpdateFile]
     dstFilesMap foreach {
       case (p, df) => {
-        if (!srcFilesMap.contains(p)) removes += Remove(df)
-        else {
+        if (!srcFilesMap.contains(p)) {
+          removes += Remove(df)
+          removedPaths += p
+        } else {
           val sf = srcFilesMap(p)
-          if ((sf.isFolder && !df.isFolder) || (!sf.isFolder && df.isFolder))
+          if ((sf.isFolder && !df.isFolder) || (!sf.isFolder && df.isFolder)) {
             removes += Remove(df)
+            removedPaths += p
+          }
         }
       }
     }
+    dstFilesMap --= removedPaths
     srcFilesMap foreach {
-      case (p, sf) => if (!dstFilesMap.contains(p)) {
+      case (p, sf) => if (dstFilesMap.contains(p)) {
+        val df = dstFilesMap(p)
+        if (!sf.isFolder && !df.isFolder && (df.size != sf.size || df.modificationDate != sf.modificationDate))
+          updates += UpdateFile(sf, df)
+      } else {
         val newPath = dstBase ++ PathUtils.parse(p)
         if (sf.isFolder)
           creates += CreateFolder(newPath)
