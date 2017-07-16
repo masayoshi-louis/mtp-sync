@@ -11,11 +11,23 @@ object MtpSyncMain extends App {
   object Opts extends ScallopConf(args) {
     version("1.0.0")
     val device = opt[Int](required = true, default = Some(0), descr = "device number")
+
     val storage = new Subcommand("storage") {
       val list = new Subcommand("ls")
       addSubcommand(list)
     }
     addSubcommand(storage)
+
+    val sync = new Subcommand("sync") {
+      val storage = opt[Int](required = true, default = Some(0), descr = "storage id")
+      val src = opt[String](required = true, descr = "source path", noshort = true)
+      val dst = opt[String](required = true, descr = "destination path", noshort = true)
+      val toMtp = new Subcommand("to-mtp")
+      val fromMtp = new Subcommand("from-mtp")
+      addSubcommand(toMtp)
+      addSubcommand(fromMtp)
+    }
+    addSubcommand(sync)
     verify()
   }
 
@@ -24,6 +36,17 @@ object MtpSyncMain extends App {
       val device = CLibMtp.openDevice(Opts.device())
       for (s <- device.storages) {
         println(s"id=${s.id}, description=${s.description}")
+      }
+    }
+    case Opts.sync :: sub :: Nil => {
+      // TODO
+      sub match {
+        case Opts.sync.toMtp => {
+          println("to")
+        }
+        case Opts.sync.fromMtp => {
+          println("from")
+        }
       }
     }
   }
