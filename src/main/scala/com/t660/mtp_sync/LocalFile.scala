@@ -13,7 +13,7 @@ case class LocalFile(path: Seq[String],
 
 object LocalFile {
 
-  def listFiles(fromPath: Seq[String]): Seq[LocalFile] = {
+  def listFiles(fromPath: Seq[String]): LocalFile = {
 
     def list(path: Seq[String], root: Boolean = false)(jFile: File): LocalFile = {
       require(jFile.exists())
@@ -31,7 +31,7 @@ object LocalFile {
       )
     }
 
-    Seq(list(fromPath, true)(new File(fromPath.mkString("/", "/", ""))))
+    list(fromPath, true)(new File(fromPath.mkString("/", "/", "")))
   }
 
 }

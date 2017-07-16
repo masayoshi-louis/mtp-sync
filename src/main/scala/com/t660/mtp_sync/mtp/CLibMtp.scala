@@ -14,6 +14,8 @@ import scala.collection.mutable.ArrayBuffer
   */
 object CLibMtp {
 
+  final val RootFileId = Int.MinValue
+
   LIBMTP_Init()
 
   var err: IntValuedEnum[LibmtpLibrary.LIBMTP_error_number_t] = _
@@ -61,7 +63,7 @@ object CLibMtp {
 
     override def id: Int = storagePtr.get().id()
 
-    override def listFiles(fromPath: Seq[String]): Seq[MtpFile] = {
+    override def listFiles(fromPath: Seq[String]): MtpFile = {
       val storageId = storagePtr.get().id()
       val fromPathLen = fromPath.size
 
@@ -107,7 +109,16 @@ object CLibMtp {
         arr.toSeq
       }
 
-      listFiles(Seq.empty, LIBMTP_FILES_AND_FOLDERS_ROOT.asInstanceOf[Int])
+      MtpFile(
+        id = RootFileId,
+        path = Seq.empty,
+        isFolder = true,
+        parentId = RootFileId,
+        storageId = storageId,
+        size = 0,
+        modificationDate = 0,
+        children = listFiles(Seq.empty, LIBMTP_FILES_AND_FOLDERS_ROOT.asInstanceOf[Int])
+      )
     }
   }
 
