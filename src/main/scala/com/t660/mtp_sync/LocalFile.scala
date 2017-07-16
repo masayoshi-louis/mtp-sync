@@ -2,6 +2,8 @@ package com.t660.mtp_sync
 
 import java.io.File
 
+import com.t660.mtp_sync.util.PathUtils
+
 /**
   * Created by luyi on 15/07/2017.
   */
@@ -31,7 +33,7 @@ object LocalFile {
       )
     }
 
-    list(fromPath, true)(new File(fromPath.mkString("/", "/", "")))
+    list(fromPath, true)(new File(PathUtils.string(fromPath)))
   }
 
 }
