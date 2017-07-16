@@ -19,13 +19,14 @@ object LocalFile {
 
     def list(path: Seq[String], root: Boolean = false)(jFile: File): LocalFile = {
       require(jFile.exists())
+      val thisPath = if (root) path else path :+ jFile.getName
       val children = if (jFile.isDirectory) {
-        jFile.listFiles().toSeq.map(list(path))
+        jFile.listFiles().toSeq.map(list(thisPath))
       } else {
         Seq.empty
       }
       LocalFile(
-        path = if (root) path else path :+ jFile.getName,
+        path = thisPath,
         isFolder = jFile.isDirectory,
         size = jFile.length(),
         modificationDate = jFile.lastModified(),
