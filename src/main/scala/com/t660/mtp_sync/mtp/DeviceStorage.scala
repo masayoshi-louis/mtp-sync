@@ -9,6 +9,6 @@ trait DeviceStorage {
 
   def description: String
 
-  def listFiles(fromPath: Seq[String]): Seq[MtpFile]
+  def listFiles(fromPath: Seq[String]): MtpFile
 
 }
