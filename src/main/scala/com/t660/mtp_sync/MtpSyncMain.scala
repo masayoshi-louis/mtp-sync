@@ -36,6 +36,8 @@ object MtpSyncMain extends App {
     verify()
   }
 
+  Opts.verify()
+
   val device = CLibMtp.openDevice(Opts.device())
 
   Opts.subcommands match {
