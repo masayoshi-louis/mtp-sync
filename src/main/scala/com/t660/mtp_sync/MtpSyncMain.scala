@@ -56,7 +56,9 @@ object MtpSyncMain extends App {
       var copyComponent: FileCopyComponent = null
       sub match {
         case Opts.sync.toMtp => {
+          println("Scanning source")
           srcRoot = LocalFile.listFiles(srcBase)
+          println("Scanning destination")
           mtpRoot = mtpStorage.listFiles(dstBase)
           dstRoot = mtpRoot
           val mtpFs = mtpStorage.getFs(mtpRoot)
@@ -64,28 +66,33 @@ object MtpSyncMain extends App {
           copyComponent = mtpFs
         }
         case Opts.sync.fromMtp => {
+          println("Scanning source")
           mtpRoot = mtpStorage.listFiles(srcBase)
           srcRoot = mtpRoot
+          println("Scanning destination")
           dstRoot = LocalFile.listFiles(dstBase)
           dstFs = new LocalFileSystem
           copyComponent = mtpStorage.getFs(mtpRoot)
         }
       }
+      println("Computing diff")
       val diffResult = diff.compute(srcBase, srcRoot, dstBase, dstRoot)
       if (diffResult.isEmpty) {
         println("up-to-date")
       } else {
         val sync = new Sync(dstFs, copyComponent.copy)
         val diffOut = Opts.sync.diffOut.map(new PrintStream(_)).getOrElse(System.out)
+        if (Opts.sync.diffOut.isDefined)
+          println("Write diff to " + Opts.sync.diffOut())
         diffResult.all.foreach(Operation.printer(diffOut))
         print("Confirm (y/n)?")
         val userInput = scala.io.StdIn.readLine()
         if (userInput.trim.toLowerCase == "y") {
           sync(diffResult)
-          println("done")
+          println("Done")
         }
         else
-          println("aborted")
+          println("Aborted")
       }
     }
   }

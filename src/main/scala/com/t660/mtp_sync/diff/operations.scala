@@ -22,9 +22,9 @@ object Operation {
   def printer(out: PrintStream)(op: Operation): Unit = print(op, out)
 
   def print(op: Operation, out: PrintStream): Unit = op match {
-    case CreateFolder(p) => out.println(s"CreateFolder: \n\tpath: ${PathUtils.stringify(p)}")
-    case AddFile(s, d) => out.println(s"Copy: \n\tsrc: ${PathUtils.stringify(s.path)}\n\tdst: ${PathUtils.stringify(d)}")
-    case Remove(f) => out.println(s"Delete: \n\tpath: ${PathUtils.stringify(f.path)}")
-    case UpdateFile(s, d) => out.println(s"Replace: \n\tsrc: ${PathUtils.stringify(s.path)}\n\tdst: ${PathUtils.stringify(d.path)}")
+    case CreateFolder(p) => out.println(s"CreateFolder: \n  path: ${PathUtils.stringify(p)}")
+    case AddFile(s, d) => out.println(s"Copy: \n  src: ${PathUtils.stringify(s.path)}\n  dst: ${PathUtils.stringify(d)}")
+    case Remove(f) => out.println(s"Delete: \n  path: ${PathUtils.stringify(f.path)}")
+    case UpdateFile(s, d) => out.println(s"Replace: \n  src: ${PathUtils.stringify(s.path)}\n  dst: ${PathUtils.stringify(d.path)}")
   }
 }

@@ -288,7 +288,7 @@ object CLibMtp {
       private val copyCb = new LIBMTP_progressfunc_t {
         override def apply(sent: Long, total: Long, data: Pointer[_]): Int = {
           val p = sent.toDouble / total * 100
-          print("\r\t%.2f%%".format(p))
+          print("\r  progress: %.2f%%".format(p))
           if (p == 100)
             println()
           return 0
