@@ -54,7 +54,7 @@ package object diff {
     srcFilesMap foreach {
       case (p, sf) => if (dstFilesMap.contains(p)) {
         val df = dstFilesMap(p)
-        if (!sf.isFolder && !df.isFolder && (df.size != sf.size || !compareModificationDate(df.modificationDate, sf.modificationDate)))
+        if (!sf.isFolder && !df.isFolder && (df.size != sf.size))
           updates += UpdateFile(sf, df)
       } else {
         val newPath = dstBase ++ PathUtils.parse(p)
@@ -66,11 +66,5 @@ package object diff {
     }
     Result(removes.toList.reverse, creates.toList, adds.toList, updates.toList)
   }
-
-  //  @inline
-  //  private def compareModificationDate(x: Long, y: Long) = x == y || x * 1000 == y || x == y * 1000
-
-  @inline
-  private def compareModificationDate(x: Long, y: Long) = true
 
 }

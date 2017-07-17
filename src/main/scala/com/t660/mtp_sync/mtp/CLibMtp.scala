@@ -186,7 +186,7 @@ object CLibMtp {
       }
 
       override def copy = (src: IFile, dst: Seq[String]) => src match {
-        case localSrc: LocalFile => {
+        case _: LocalFile => {
           val parent = find(dst.dropRight(1)).get
           val name = dst.last
           val typeExt = FilenameUtils.getExtension(name)
@@ -200,7 +200,6 @@ object CLibMtp {
             val newFile = newFilePtr.get
             newFile.filename(filenameBuff)
             newFile.parent_id(parent.id)
-            newFile.modificationdate(src.modificationDate / 1000)
             newFile.filesize(src.size)
             newFile.filetype(getFileType(typeExt))
             newFile.storage_id(DeviceStorageImpl.this.id)
