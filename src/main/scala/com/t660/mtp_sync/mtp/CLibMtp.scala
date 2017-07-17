@@ -8,6 +8,7 @@ import libmtp.LibmtpLibrary.LIBMTP_error_number_t.{LIBMTP_ERROR_NONE, LIBMTP_ERR
 import libmtp.LibmtpLibrary.LIBMTP_filetype_t.LIBMTP_FILETYPE_FOLDER
 import libmtp.LibmtpLibrary._
 import libmtp._
+import org.apache.commons.io.FilenameUtils
 import org.bridj.{IntValuedEnum, Pointer}
 
 import scala.annotation.tailrec
@@ -182,19 +183,44 @@ object CLibMtp {
             }
           }
         }
-        case _ => //ignore
       }
 
       override def copy = (src: IFile, dst: Seq[String]) => src match {
         case localSrc: LocalFile => {
-          ???
+          val parent = find(dst.dropRight(1)).get
+          val name = dst.last
+          val typeExt = FilenameUtils.getExtension(name)
+          val srcPath = PathUtils.stringify(src.path)
+          val filenameBuff = Pointer.allocateBytes((name.length + 1) * 4)
+          val srcPathBuff = Pointer.allocateBytes((srcPath.length + 1) * 4)
+          val newFilePtr = LIBMTP_new_file_t()
+          val ret = try {
+            filenameBuff.setCString(name)
+            srcPathBuff.setCString(srcPath)
+            val newFile = newFilePtr.get
+            newFile.filename(filenameBuff)
+            newFile.parent_id(parent.id)
+            newFile.modificationdate(src.modificationDate / 1000)
+            newFile.filesize(src.size)
+            newFile.filetype(getFileType(typeExt))
+            newFile.storage_id(DeviceStorageImpl.this.id)
+            LIBMTP_Send_File_From_File(devicePtr, srcPathBuff, newFilePtr, copyCb.toPointer, null)
+          } finally {
+            srcPathBuff.release()
+            LIBMTP_destroy_file_t(newFilePtr) // this function also releases filenameBuff
+          }
+          if (ret != LIBMTP_ERROR_NONE.value) {
+            LIBMTP_Dump_Errorstack(devicePtr)
+            LIBMTP_Clear_Errorstack(devicePtr)
+            throw new RuntimeException("failed to copy file to" + PathUtils.stringify(dst))
+          }
         }
         case mtpSrc: MtpFile => {
           val dstPath = PathUtils.stringify(dst)
           val dstPathBuff = Pointer.allocateBytes((dstPath.length + 1) * 4)
           val ret = try {
             dstPathBuff.setCString(dstPath)
-            LIBMTP_Get_File_To_File(devicePtr, mtpSrc.id, dstPathBuff, null, null)
+            LIBMTP_Get_File_To_File(devicePtr, mtpSrc.id, dstPathBuff, copyCb.toPointer, null)
           } finally {
             dstPathBuff.release()
           }
@@ -209,7 +235,66 @@ object CLibMtp {
         }
       }
 
+      @inline
       private[this] def find(path: Seq[String]): Option[MtpFile] = pathsMap.get(path)
+
+      @inline
+      private[this] def strcasecmp(a: String, b: String) = {
+        if (a != null) a.equalsIgnoreCase(b)
+        else if (b != null) b.equalsIgnoreCase(a)
+        else true
+      }
+
+      private[this] def getFileType(typeExt: String): LIBMTP_filetype_t = {
+        import LIBMTP_filetype_t._
+        var filetype: LIBMTP_filetype_t = null
+        if (!strcasecmp(typeExt, "wav")) filetype = LIBMTP_FILETYPE_WAV
+        else if (!strcasecmp(typeExt, "mp3")) filetype = LIBMTP_FILETYPE_MP3
+        else if (!strcasecmp(typeExt, "wma")) filetype = LIBMTP_FILETYPE_WMA
+        else if (!strcasecmp(typeExt, "ogg")) filetype = LIBMTP_FILETYPE_OGG
+        else if (!strcasecmp(typeExt, "mp4")) filetype = LIBMTP_FILETYPE_MP4
+        else if (!strcasecmp(typeExt, "wmv")) filetype = LIBMTP_FILETYPE_WMV
+        else if (!strcasecmp(typeExt, "avi")) filetype = LIBMTP_FILETYPE_AVI
+        else if (!strcasecmp(typeExt, "mpeg") || !strcasecmp(typeExt, "mpg")) filetype = LIBMTP_FILETYPE_MPEG
+        else if (!strcasecmp(typeExt, "asf")) filetype = LIBMTP_FILETYPE_ASF
+        else if (!strcasecmp(typeExt, "qt") || !strcasecmp(typeExt, "mov")) filetype = LIBMTP_FILETYPE_QT
+        else if (!strcasecmp(typeExt, "wma")) filetype = LIBMTP_FILETYPE_WMA
+        else if (!strcasecmp(typeExt, "jpg") || !strcasecmp(typeExt, "jpeg")) filetype = LIBMTP_FILETYPE_JPEG
+        else if (!strcasecmp(typeExt, "jfif")) filetype = LIBMTP_FILETYPE_JFIF
+        else if (!strcasecmp(typeExt, "tif") || !strcasecmp(typeExt, "tiff")) filetype = LIBMTP_FILETYPE_TIFF
+        else if (!strcasecmp(typeExt, "bmp")) filetype = LIBMTP_FILETYPE_BMP
+        else if (!strcasecmp(typeExt, "gif")) filetype = LIBMTP_FILETYPE_GIF
+        else if (!strcasecmp(typeExt, "pic") || !strcasecmp(typeExt, "pict")) filetype = LIBMTP_FILETYPE_PICT
+        else if (!strcasecmp(typeExt, "png")) filetype = LIBMTP_FILETYPE_PNG
+        else if (!strcasecmp(typeExt, "wmf")) filetype = LIBMTP_FILETYPE_WINDOWSIMAGEFORMAT
+        else if (!strcasecmp(typeExt, "ics")) filetype = LIBMTP_FILETYPE_VCALENDAR2
+        else if (!strcasecmp(typeExt, "exe") || !strcasecmp(typeExt, "com") || !strcasecmp(typeExt, "bat") || !strcasecmp(typeExt, "dll") || !strcasecmp(typeExt, "sys")) filetype = LIBMTP_FILETYPE_WINEXEC
+        else if (!strcasecmp(typeExt, "aac")) filetype = LIBMTP_FILETYPE_AAC
+        else if (!strcasecmp(typeExt, "mp2")) filetype = LIBMTP_FILETYPE_MP2
+        else if (!strcasecmp(typeExt, "flac")) filetype = LIBMTP_FILETYPE_FLAC
+        else if (!strcasecmp(typeExt, "m4a")) filetype = LIBMTP_FILETYPE_M4A
+        else if (!strcasecmp(typeExt, "doc")) filetype = LIBMTP_FILETYPE_DOC
+        else if (!strcasecmp(typeExt, "xml")) filetype = LIBMTP_FILETYPE_XML
+        else if (!strcasecmp(typeExt, "xls")) filetype = LIBMTP_FILETYPE_XLS
+        else if (!strcasecmp(typeExt, "ppt")) filetype = LIBMTP_FILETYPE_PPT
+        else if (!strcasecmp(typeExt, "mht")) filetype = LIBMTP_FILETYPE_MHT
+        else if (!strcasecmp(typeExt, "jp2")) filetype = LIBMTP_FILETYPE_JP2
+        else if (!strcasecmp(typeExt, "jpx")) filetype = LIBMTP_FILETYPE_JPX
+        else if (!strcasecmp(typeExt, "bin")) filetype = LIBMTP_FILETYPE_FIRMWARE
+        else if (!strcasecmp(typeExt, "vcf")) filetype = LIBMTP_FILETYPE_VCARD3
+        else /* Tagging as unknown file type */ filetype = LIBMTP_FILETYPE_UNKNOWN
+        filetype
+      }
+
+      private val copyCb = new LIBMTP_progressfunc_t {
+        override def apply(sent: Long, total: Long, data: Pointer[_]): Int = {
+          val p = sent.toDouble / total * 100
+          print("\r\t%.2f%%".format(p))
+          if (p == 100)
+            println()
+          return 0
+        }
+      }
     }
   }
 

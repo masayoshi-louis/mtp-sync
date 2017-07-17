@@ -25,6 +25,6 @@ object Operation {
     case CreateFolder(p) => out.println(s"CreateFolder: \n\tpath: ${PathUtils.stringify(p)}")
     case AddFile(s, d) => out.println(s"Copy: \n\tsrc: ${PathUtils.stringify(s.path)}\n\tdst: ${PathUtils.stringify(d)}")
     case Remove(f) => out.println(s"Delete: \n\tpath: ${PathUtils.stringify(f.path)}")
-    case UpdateFile(s, d) => out.println(s"Copy: \n\tsrc: ${PathUtils.stringify(s.path)}\n\tdst: ${PathUtils.stringify(d.path)}")
+    case UpdateFile(s, d) => out.println(s"Replace: \n\tsrc: ${PathUtils.stringify(s.path)}\n\tdst: ${PathUtils.stringify(d.path)}")
   }
 }

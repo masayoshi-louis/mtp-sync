@@ -14,7 +14,9 @@ package object diff {
                     creates: Seq[CreateFolder],
                     adds: Seq[AddFile],
                     updates: Seq[UpdateFile]) {
-    def all = removes ++ creates ++ updates ++ adds
+    lazy val all = removes ++ creates ++ updates ++ adds
+
+    lazy val isEmpty = Seq(removes, creates, adds, updates).forall(_.isEmpty)
   }
 
   def compute(srcBase: Seq[String], srcRoot: IFile, dstBase: Seq[String], dstRoot: IFile): Result = {
@@ -65,7 +67,10 @@ package object diff {
     Result(removes.toList.reverse, creates.toList, adds.toList, updates.toList)
   }
 
+  //  @inline
+  //  private def compareModificationDate(x: Long, y: Long) = x == y || x * 1000 == y || x == y * 1000
+
   @inline
-  private def compareModificationDate(x: Long, y: Long) = x == y || x * 1000 == y || x == y * 1000
+  private def compareModificationDate(x: Long, y: Long) = true
 
 }

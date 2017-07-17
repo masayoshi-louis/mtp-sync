@@ -1,5 +1,7 @@
 package com.t660.mtp_sync
 
+import java.io.PrintStream
+
 import com.t660.mtp_sync.diff.Operation
 import com.t660.mtp_sync.mtp.{CLibMtp, MtpFile}
 import com.t660.mtp_sync.util.PathUtils
@@ -24,6 +26,7 @@ object MtpSyncMain extends App {
       val storage = opt[Int](required = true, default = Some(0), descr = "storage id")
       val src = opt[String](required = true, descr = "source path", noshort = true)
       val dst = opt[String](required = true, descr = "destination path", noshort = true)
+      val diffOut = opt[String](name = "diff-out", required = false, descr = "print diff to file instead of stdout", noshort = true)
       val toMtp = new Subcommand("to-mtp")
       val fromMtp = new Subcommand("from-mtp")
       addSubcommand(toMtp)
@@ -66,11 +69,22 @@ object MtpSyncMain extends App {
           copyComponent = mtpStorage.getFs(mtpRoot)
         }
       }
-      val sync = new Sync(dstFs, copyComponent.copy)
       val diffResult = diff.compute(srcBase, srcRoot, dstBase, dstRoot)
-      diffResult.all.foreach(Operation.printer(System.out))
-      // TODO add confirm
-      sync(diffResult)
+      if (diffResult.isEmpty) {
+        println("up-to-date")
+      } else {
+        val sync = new Sync(dstFs, copyComponent.copy)
+        val diffOut = Opts.sync.diffOut.map(new PrintStream(_)).getOrElse(System.out)
+        diffResult.all.foreach(Operation.printer(diffOut))
+        print("Confirm (y/n)?")
+        val userInput = scala.io.StdIn.readLine()
+        if (userInput.trim.toLowerCase == "y") {
+          sync(diffResult)
+          println("done")
+        }
+        else
+          println("aborted")
+      }
     }
   }
 
