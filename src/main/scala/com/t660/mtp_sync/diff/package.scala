@@ -13,15 +13,17 @@ package object diff {
   case class Result(removes: Seq[Remove],
                     creates: Seq[CreateFolder],
                     adds: Seq[AddFile],
-                    updates: Seq[UpdateFile])
+                    updates: Seq[UpdateFile]) {
+    def all = removes ++ creates ++ updates ++ adds
+  }
 
   def compute(srcBase: Seq[String], srcRoot: IFile, dstBase: Seq[String], dstRoot: IFile): Result = {
     val srcFiles = IFile.flatten(srcRoot).filter(_.path.startsWith(srcBase))
     val dstFiles = IFile.flatten(dstRoot).filter(_.path.startsWith(dstBase))
     val srcFilesMap = new mutable.LinkedHashMap[String, IFile]
     val dstFilesMap = new mutable.LinkedHashMap[String, IFile]
-    srcFiles.foreach(f => srcFilesMap.put(PathUtils.string(f.path.drop(srcBase.size)), f))
-    dstFiles.foreach(f => dstFilesMap.put(PathUtils.string(f.path.drop(dstBase.size)), f))
+    srcFiles.foreach(f => srcFilesMap.put(PathUtils.stringify(f.path.drop(srcBase.size)), f))
+    dstFiles.foreach(f => dstFilesMap.put(PathUtils.stringify(f.path.drop(dstBase.size)), f))
     compute(srcBase, srcFilesMap, dstBase, dstFilesMap)
   }
 
@@ -50,7 +52,7 @@ package object diff {
     srcFilesMap foreach {
       case (p, sf) => if (dstFilesMap.contains(p)) {
         val df = dstFilesMap(p)
-        if (!sf.isFolder && !df.isFolder && (df.size != sf.size || df.modificationDate != sf.modificationDate))
+        if (!sf.isFolder && !df.isFolder && (df.size != sf.size || !compareModificationDate(df.modificationDate, sf.modificationDate)))
           updates += UpdateFile(sf, df)
       } else {
         val newPath = dstBase ++ PathUtils.parse(p)
@@ -62,5 +64,8 @@ package object diff {
     }
     Result(removes.toList.reverse, creates.toList, adds.toList, updates.toList)
   }
+
+  @inline
+  private def compareModificationDate(x: Long, y: Long) = x == y || x * 1000 == y || x == y * 1000
 
 }

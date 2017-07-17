@@ -34,7 +34,7 @@ object LocalFile {
       )
     }
 
-    list(fromPath, true)(new File(PathUtils.string(fromPath)))
+    list(fromPath, true)(new File(PathUtils.stringify(fromPath)))
   }
 
 }

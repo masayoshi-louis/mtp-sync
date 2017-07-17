@@ -17,6 +17,6 @@ object PathUtils {
     else tmp
   }
 
-  def string(path: Seq[String]) = path.mkString("/", "/", "")
+  def stringify(path: Seq[String]) = path.mkString("/", "/", "")
 
 }

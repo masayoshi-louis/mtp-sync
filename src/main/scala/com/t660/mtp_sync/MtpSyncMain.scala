@@ -1,6 +1,8 @@
 package com.t660.mtp_sync
 
-import com.t660.mtp_sync.mtp.CLibMtp
+import com.t660.mtp_sync.diff.Operation
+import com.t660.mtp_sync.mtp.{CLibMtp, MtpFile}
+import com.t660.mtp_sync.util.PathUtils
 import org.rogach.scallop.{ScallopConf, Subcommand}
 
 /**
@@ -31,23 +33,44 @@ object MtpSyncMain extends App {
     verify()
   }
 
+  val device = CLibMtp.openDevice(Opts.device())
+
   Opts.subcommands match {
     case Opts.storage :: Opts.storage.list :: Nil => {
-      val device = CLibMtp.openDevice(Opts.device())
       for (s <- device.storages) {
         println(s"id=${s.id}, description=${s.description}")
       }
     }
     case Opts.sync :: sub :: Nil => {
-      // TODO
+      val mtpStorage = device.storages(Opts.sync.storage())
+      var mtpRoot: MtpFile = null
+      val srcBase = PathUtils.parse(PathUtils.absolute(Opts.sync.src()))
+      val dstBase = PathUtils.parse(PathUtils.absolute(Opts.sync.dst()))
+      var srcRoot, dstRoot: IFile = null
+      var dstFs: FileSystem = null
+      var copyComponent: FileCopyComponent = null
       sub match {
         case Opts.sync.toMtp => {
-          println("to")
+          srcRoot = LocalFile.listFiles(srcBase)
+          mtpRoot = mtpStorage.listFiles(dstBase)
+          dstRoot = mtpRoot
+          val mtpFs = mtpStorage.getFs(mtpRoot)
+          dstFs = mtpFs
+          copyComponent = mtpFs
         }
         case Opts.sync.fromMtp => {
-          println("from")
+          mtpRoot = mtpStorage.listFiles(srcBase)
+          srcRoot = mtpRoot
+          dstRoot = LocalFile.listFiles(dstBase)
+          dstFs = new LocalFileSystem
+          copyComponent = mtpStorage.getFs(mtpRoot)
         }
       }
+      val sync = new Sync(dstFs, copyComponent.copy)
+      val diffResult = diff.compute(srcBase, srcRoot, dstBase, dstRoot)
+      diffResult.all.foreach(Operation.printer(System.out))
+      // TODO add confirm
+      sync(diffResult)
     }
   }
 
