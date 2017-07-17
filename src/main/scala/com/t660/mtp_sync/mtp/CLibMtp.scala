@@ -206,7 +206,9 @@ object CLibMtp {
             LIBMTP_Send_File_From_File(devicePtr, srcPathBuff, newFilePtr, copyCb.toPointer, null)
           } finally {
             srcPathBuff.release()
-            LIBMTP_destroy_file_t(newFilePtr) // this function also releases filenameBuff
+            newFilePtr.get.filename(null)
+            LIBMTP_destroy_file_t(newFilePtr)
+            filenameBuff.release()
           }
           if (ret != LIBMTP_ERROR_NONE.value) {
             LIBMTP_Dump_Errorstack(devicePtr)
