@@ -13,7 +13,8 @@ object PathUtils {
 
   def parse(str: String): Seq[String] = {
     val tmp = FilenameUtils.normalize(str).split("/")
-    if (tmp(0) == "") tmp.drop(1)
+    if (tmp.length == 0) Seq.empty
+    else if (tmp(0) == "") tmp.drop(1)
     else tmp
   }
 
