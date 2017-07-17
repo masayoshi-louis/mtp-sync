@@ -27,6 +27,7 @@ object MtpSyncMain extends App {
       val src = opt[String](required = true, descr = "source path", noshort = true)
       val dst = opt[String](required = true, descr = "destination path", noshort = true)
       val diffOut = opt[String](name = "diff-out", required = false, descr = "print diff to file instead of stdout", noshort = true)
+      val noHidden = opt[Boolean](name = "no-hidden", required = false, default = Some(false), descr = "exclude hidden files", noshort = true)
       val toMtp = new Subcommand("to-mtp")
       val fromMtp = new Subcommand("from-mtp")
       addSubcommand(toMtp)
@@ -76,7 +77,7 @@ object MtpSyncMain extends App {
         }
       }
       println("Computing diff")
-      val diffResult = diff.compute(srcBase, srcRoot, dstBase, dstRoot)
+      val diffResult = diff.compute(srcBase, srcRoot, dstBase, dstRoot, Opts.sync.noHidden())
       if (diffResult.isEmpty) {
         println("up-to-date")
       } else {

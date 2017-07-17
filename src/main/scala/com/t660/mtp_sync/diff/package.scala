@@ -19,8 +19,12 @@ package object diff {
     lazy val isEmpty = Seq(removes, creates, adds, updates).forall(_.isEmpty)
   }
 
-  def compute(srcBase: Seq[String], srcRoot: IFile, dstBase: Seq[String], dstRoot: IFile): Result = {
-    val srcFiles = IFile.flatten(srcRoot).filter(_.path.startsWith(srcBase))
+  def compute(srcBase: Seq[String], srcRoot: IFile, dstBase: Seq[String], dstRoot: IFile, noHidden: Boolean): Result = {
+    val srcFiles = if (noHidden) {
+      IFile.flatten(srcRoot).filter(f => f.path.startsWith(srcBase) && !f.path.exists(_.startsWith(".")))
+    } else {
+      IFile.flatten(srcRoot).filter(_.path.startsWith(srcBase))
+    }
     val dstFiles = IFile.flatten(dstRoot).filter(_.path.startsWith(dstBase))
     val srcFilesMap = new mutable.LinkedHashMap[String, IFile]
     val dstFilesMap = new mutable.LinkedHashMap[String, IFile]
