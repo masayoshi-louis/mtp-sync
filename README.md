@@ -27,3 +27,9 @@ Subcommand: sync to-mtp
 Subcommand: sync from-mtp
       --help   Show help message
 ```
+
+### Example
+
+```
+java -jar target/mtp-sync-1.0.0-SNAPSHOT.jar -d 0 sync -s 0 --src ~/Music --dst / --no-hidden to-mtp
+```
