@@ -1,5 +1,11 @@
 MTP-Sync
 ======
+Relies on [libmtp](https://sourceforge.net/p/libmtp/).
+
+On macOS:
+```shell
+brew install libmtp
+```
 
 ## Usage
 
